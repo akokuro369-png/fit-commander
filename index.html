@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0B0E1A">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>FitCommander</title>
+<style>
+:root {
+  --bg: #0B0E1A;
+  --surface: #12182A;
+  --surface-2: #182036;
+  --line: rgba(255,255,255,.10);
+  --line-strong: rgba(255,255,255,.18);
+  --text: #F4F7FB;
+  --muted: #8F9BB2;
+  --accent: #4EA1FF;
+  --accent-2: #8B5CF6;
+  --good: #2DD4BF;
+  --warn: #F6B35F;
+  --danger: #F87171;
+  --radius: 8px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; height: 100dvh; overflow: hidden; }
+button, input, select, textarea { font: inherit; }
+button { min-height: 44px; border: 0; color: var(--text); cursor: pointer; }
+button:disabled { opacity: .55; cursor: wait; }
+input, select, textarea { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: var(--radius); background: #0E1424; color: var(--text); padding: 10px 12px; outline: none; }
+input:focus, select:focus, textarea:focus { border-color: rgba(78,161,255,.7); box-shadow: 0 0 0 3px rgba(78,161,255,.12); }
+select option { background: var(--surface); }
+label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+
+.app-shell { height: 100dvh; padding-top: env(safe-area-inset-top); max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; background: radial-gradient(circle at 20% 0%, rgba(78,161,255,.12), transparent 28%), var(--bg); border-left: 1px solid rgba(255,255,255,.06); border-right: 1px solid rgba(255,255,255,.06); }
+.header { flex-shrink: 0; padding: 14px 16px 10px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.brand { min-width: 0; flex: 1; }
+.brand h1 { margin: 0; font-size: 21px; line-height: 1.1; font-weight: 800; letter-spacing: 0; }
+.brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.icon-btn { width: 44px; height: 44px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; font-size: 20px; }
+.content { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 14px 22px; -webkit-overflow-scrolling: touch; }
+.tab-page { display: none; }
+.tab-page.active { display: block; }
+.tab-bar { flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); display: grid; grid-template-columns: repeat(4, 1fr); background: rgba(18,24,42,.98); border-top: 1px solid var(--line); }
+.tab-bar button { background: transparent; color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 2px 7px; font-size: 11px; }
+.tab-bar button .tab-icon { font-size: 19px; line-height: 1; }
+.tab-bar button.active { color: var(--accent); }
+
+.panel { background: rgba(18,24,42,.92); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+.panel-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+.panel-title h2, .panel-title h3 { margin: 0; font-size: 15px; line-height: 1.3; }
+.subtle { color: var(--muted); font-size: 12px; line-height: 1.45; }
+.empty-state { padding: 24px 8px; color: var(--muted); text-align: center; font-size: 13px; }
+.gradient-text { background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+.segmented { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-bottom: 12px; }
+.segmented button { border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 13px; padding: 0 6px; }
+.segmented button.active { color: #fff; border-color: rgba(78,161,255,.6); background: linear-gradient(135deg, rgba(78,161,255,.32), rgba(139,92,246,.26)); }
+.exercise-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.exercise-btn { width: 100%; min-height: 56px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); text-align: left; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.exercise-name { min-width: 0; }
+.exercise-name strong { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.exercise-name span { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; }
+.pill { display: inline-flex; align-items: center; justify-content: center; min-height: 24px; border-radius: 999px; padding: 2px 9px; font-size: 11px; color: var(--accent); background: rgba(78,161,255,.12); border: 1px solid rgba(78,161,255,.24); white-space: nowrap; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+.actions { display: flex; gap: 10px; }
+.actions button { flex: 1; }
+.btn-primary { border-radius: var(--radius); background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 700; }
+.btn-secondary { border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--line); color: var(--text); }
+.btn-danger { border-radius: var(--radius); background: rgba(248,113,113,.14); color: var(--danger); border: 1px solid rgba(248,113,113,.3); }
+.btn-ghost { background: transparent; color: var(--accent); padding: 0 4px; min-height: 32px; }
+
+.record-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.record-head h2 { margin: 0; font-size: 18px; }
+.last-box { margin: 10px 0 12px; padding: 10px 12px; border-radius: var(--radius); background: rgba(78,161,255,.08); border: 1px solid rgba(78,161,255,.18); }
+.last-box strong { display: block; font-size: 13px; margin-bottom: 4px; }
+.set-list { display: grid; gap: 9px; margin-bottom: 10px; }
+.set-row { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
+.set-row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.set-row-top strong { font-size: 13px; }
+.set-row-top button { min-height: 32px; color: var(--danger); }
+
+.stopwatch { text-align: center; padding: 12px 4px 6px; }
+.time-display { font-size: 48px; line-height: 1; font-weight: 800; font-variant-numeric: tabular-nums; margin-bottom: 14px; }
+.timer-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.timer-controls button { border-radius: var(--radius); }
+.timer-start { background: rgba(45,212,191,.20); border: 1px solid rgba(45,212,191,.38); color: var(--good); }
+.timer-pause { background: rgba(246,179,95,.18); border: 1px solid rgba(246,179,95,.34); color: var(--warn); }
+.timer-stop { background: rgba(248,113,113,.16); border: 1px solid rgba(248,113,113,.32); color: var(--danger); }
+
+.add-form { display: none; }
+.add-form.active { display: block; }
+.field-gap { display: grid; gap: 10px; }
+.loading-banner { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 45; display: none; align-items: center; gap: 8px; min-height: 36px; padding: 8px 13px; border-radius: 999px; background: rgba(18,24,42,.96); border: 1px solid var(--line-strong); color: var(--text); font-size: 12px; box-shadow: 0 12px 30px rgba(0,0,0,.28); }
+.loading-banner.show { display: inline-flex; }
+.loading-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: .35; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.08); } }
+.toast { position: fixed; left: 50%; top: 18px; transform: translateX(-50%) translateY(-12px); width: calc(100% - 32px); max-width: 480px; background: #172033; color: #fff; border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 11px 14px; font-size: 13px; opacity: 0; pointer-events: none; transition: .2s; z-index: 50; box-shadow: 0 16px 40px rgba(0,0,0,.32); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.modal { position: fixed; inset: 0; z-index: 40; display: none; align-items: flex-end; background: rgba(0,0,0,.62); }
+.modal.active { display: flex; }
+.modal-body { width: 100%; max-width: 520px; margin: 0 auto; background: var(--surface); border-top: 1px solid var(--line); border-radius: 8px 8px 0 0; padding: 16px; }
+.modal-body h2 { margin: 0 0 12px; font-size: 16px; }
+
+.metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.metric { min-height:70px; border-radius:var(--radius); background:var(--surface-2); border:1px solid var(--line); padding:10px; }
+.metric .value { font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; line-height:1.1; }
+.metric .label { color:var(--muted); font-size:11px; margin-top:5px; }
+.advice { white-space:pre-wrap; color:var(--text); background:rgba(78,161,255,.07); border:1px solid rgba(78,161,255,.18); border-radius:var(--radius); padding:12px; font-size:13px; line-height:1.6; }
+.chart-wrap { height:180px; border-radius:var(--radius); background:var(--surface-2); border:1px solid var(--line); padding:10px; overflow:hidden; }
+.chart-wrap svg { width:100%; height:100%; display:block; }
+.legend { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; color:var(--muted); font-size:11px; }
+.legend span { display:inline-flex; align-items:center; gap:5px; }
+.legend i { width:8px; height:8px; border-radius:50%; display:inline-block; }
+.calendar-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.calendar-head h2 { margin:0; font-size:17px; }
+.calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
+.weekday { color:var(--muted); font-size:10px; text-align:center; padding:4px 0; }
+.day-cell { min-height:54px; border-radius:var(--radius); background:rgba(24,32,54,.82); border:1px solid var(--line); color:var(--text); padding:6px 4px; display:flex; flex-direction:column; align-items:center; justify-content:space-between; }
+.day-cell.out { opacity:.35; }
+.day-cell.today { border-color:rgba(78,161,255,.7); }
+.day-num { font-size:12px; font-variant-numeric:tabular-nums; }
+.dots { min-height:8px; display:flex; justify-content:center; gap:3px; }
+.dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+.dot.strength { background:var(--accent); }
+.dot.cardio { background:var(--good); }
+.dot.meditation { background:var(--accent-2); }
+.detail-list { display:grid; gap:8px; }
+.detail-row { display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid rgba(255,255,255,.06); padding:7px 0; font-size:13px; }
+.detail-row span:first-child { color:var(--muted); }
+.detail-row span:last-child { text-align:right; }
+@media (min-width: 430px) {
+  .segmented { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .exercise-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 360px) {
+  .form-row.three { grid-template-columns: 1fr; }
+  .time-display { font-size: 42px; }
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="header">
+    <div class="brand">
+      <h1><span class="gradient-text">FitCommander</span></h1>
+      <p id="statusLine">Workout Phase</p>
+    </div>
+    <button class="icon-btn" type="button" aria-label="設定" title="設定" onclick="openSettings()">⚙</button>
+  </header>
+
+  <main class="content">
+    <section id="page-today" class="tab-page">
+      <div class="panel">
+        <div class="panel-title"><h2>Today</h2><button class="btn-ghost" type="button" onclick="loadToday()">更新</button></div>
+        <div id="todaySummary" class="metric-grid"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><h3>Advice</h3><span class="pill">Daily</span></div>
+        <div id="todayAdvice" class="advice">読み込み待ち</div>
+      </div>
+    </section>
+
+    <section id="page-workout" class="tab-page active">
+      <div id="workoutPicker">
+        <div class="panel">
+          <div class="panel-title">
+            <h2>Workout</h2>
+            <button class="btn-ghost" type="button" onclick="toggleAddExercise(true)">＋種目</button>
+          </div>
+          <div id="bodyPartButtons" class="segmented"></div>
+          <div id="exerciseList" class="exercise-grid"></div>
+        </div>
+
+        <div id="addExercisePanel" class="panel add-form">
+          <div class="panel-title"><h3>種目追加</h3><button class="btn-ghost" type="button" onclick="toggleAddExercise(false)">閉じる</button></div>
+          <div class="field-gap">
+            <div>
+              <label for="newBodyPart">部位</label>
+              <select id="newBodyPart"></select>
+            </div>
+            <div>
+              <label for="newExerciseName">種目名</label>
+              <input id="newExerciseName" type="text" placeholder="例: インクラインベンチプレス">
+            </div>
+            <div class="form-row">
+              <div>
+                <label for="newEquipment">器具</label>
+                <input id="newEquipment" type="text" placeholder="ダンベル">
+              </div>
+              <div>
+                <label for="newIsCardio">種別</label>
+                <select id="newIsCardio">
+                  <option value="false">筋トレ</option>
+                  <option value="true">有酸素</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn-primary" type="button" onclick="saveExercise()">追加する</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="recordPanel" class="panel" style="display:none">
+        <div class="record-head">
+          <div>
+            <h2 id="recordTitle">記録</h2>
+            <div id="recordMeta" class="subtle"></div>
+          </div>
+          <button class="btn-secondary" type="button" onclick="backToPicker()">戻る</button>
+        </div>
+        <div id="lastWorkout" class="last-box subtle">前回値を読み込み中...</div>
+        <div id="strengthRecord">
+          <div id="setList" class="set-list"></div>
+          <div class="actions" style="margin-bottom:12px">
+            <button class="btn-secondary" type="button" onclick="addSetRow()">セット追加</button>
+            <button class="btn-primary" type="button" onclick="saveWorkout()">保存</button>
+          </div>
+        </div>
+        <div id="cardioRecord" style="display:none">
+          <div class="stopwatch">
+            <div id="timerDisplay" class="time-display">00:00</div>
+            <div class="timer-controls">
+              <button class="timer-start" type="button" onclick="timerStart()" id="timerStartBtn">開始</button>
+              <button class="timer-pause" type="button" onclick="timerPause()" id="timerPauseBtn">一時停止</button>
+              <button class="timer-stop" type="button" onclick="timerStop()">停止</button>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:12px">
+            <div>
+              <label for="cardioDuration">時間（分）</label>
+              <input id="cardioDuration" type="number" min="0" step="0.1" placeholder="自動入力">
+            </div>
+            <div>
+              <label for="cardioDistance">距離（km・任意）</label>
+              <input id="cardioDistance" type="number" min="0" step="0.01" placeholder="0.00">
+            </div>
+          </div>
+          <button class="btn-primary" type="button" onclick="saveWorkout()" style="width:100%">保存</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-bodymind" class="tab-page">
+      <div class="panel">
+        <div class="panel-title"><h2>Body/Mind</h2><button class="btn-ghost" type="button" onclick="loadBodyMind()">更新</button></div>
+        <div id="bodyMindMetrics" class="metric-grid"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><h3>Body Log</h3><span class="pill">Manual</span></div>
+        <div class="field-gap">
+          <div class="form-row">
+            <div><label for="bodyWeight">体重 kg</label><input id="bodyWeight" type="number" min="0" step="0.1" placeholder="68.5"></div>
+            <div><label for="bodyFat">体脂肪率 %</label><input id="bodyFat" type="number" min="0" step="0.1" placeholder="16.2"></div>
+          </div>
+          <button class="btn-primary" type="button" onclick="saveBodyLog()">保存</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><h3>Trend</h3><span class="pill" id="trendMonthLabel"></span></div>
+        <div id="bodyTrendChart" class="chart-wrap"></div>
+        <div class="legend"><span><i style="background:var(--accent)"></i>体重</span><span><i style="background:var(--accent-2)"></i>体脂肪率</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><h3>Meditation</h3><span class="pill">Mind</span></div>
+        <div class="stopwatch">
+          <div id="medTimerDisplay" class="time-display">00:00</div>
+          <div class="timer-controls">
+            <button class="timer-start" type="button" onclick="medTimerStart()">開始</button>
+            <button class="timer-pause" type="button" onclick="medTimerPause()">一時停止</button>
+            <button class="timer-stop" type="button" onclick="medTimerStop()">停止</button>
+          </div>
+        </div>
+        <div class="field-gap">
+          <div><label for="meditationMinutes">瞑想 分</label><input id="meditationMinutes" type="number" min="0" step="0.1" placeholder="10"></div>
+          <button class="btn-primary" type="button" onclick="saveMeditation()">保存</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-calendar" class="tab-page">
+      <div class="panel">
+        <div class="calendar-head">
+          <button class="btn-secondary" type="button" onclick="moveCalendarMonth(-1)">前月</button>
+          <h2 id="calendarTitle"></h2>
+          <button class="btn-secondary" type="button" onclick="moveCalendarMonth(1)">翌月</button>
+        </div>
+        <div id="calendarGrid" class="calendar-grid"></div>
+        <div class="legend"><span><i style="background:var(--accent)"></i>筋トレ</span><span><i style="background:var(--good)"></i>有酸素</span><span><i style="background:var(--accent-2)"></i>瞑想</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><h3 id="dayDetailTitle">Detail</h3><span class="pill">Day</span></div>
+        <div id="dayDetail" class="detail-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tab-bar">
+    <button type="button" onclick="switchTab(this,'today')"><span class="tab-icon">◎</span>Today</button>
+    <button class="active" type="button" onclick="switchTab(this,'workout')"><span class="tab-icon">◆</span>Workout</button>
+    <button type="button" onclick="switchTab(this,'bodymind')"><span class="tab-icon">◐</span>Body/Mind</button>
+    <button type="button" onclick="switchTab(this,'calendar')"><span class="tab-icon">□</span>Calendar</button>
+  </nav>
+</div>
+
+<div id="settingsModal" class="modal" onclick="closeSettingsFromBackdrop(event)">
+  <div class="modal-body">
+    <h2>GAS接続</h2>
+    <div class="field-gap">
+      <div>
+        <label for="gasUrlInput">WebApp URL</label>
+        <input id="gasUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <div class="actions">
+        <button class="btn-secondary" type="button" onclick="closeSettings()">閉じる</button>
+        <button class="btn-primary" type="button" onclick="saveGasUrl()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="loadingBanner" class="loading-banner"><span class="loading-dot"></span><span id="loadingText">通信中</span></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxCO5YzKTbtiSUagWErefBVW8Ew52NP4sPwCVlWMrAKMA5EcXp5Li2kticwuBdwwqcj/exec';
+const STORAGE_GAS_URL_KEY = 'fitcmd_gas_url';
+const BODY_PARTS = ['胸', '背中', '肩', '腕', '脚', '腹', '有酸素'];
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+let activeGasUrl = GAS_URL || localStorage.getItem(STORAGE_GAS_URL_KEY) || '';
+let exercises = [];
+let selectedBodyPart = '胸';
+let selectedExercise = null;
+let lastWorkout = null;
+let todayData = null;
+let monthSummary = [];
+let calendarDate = new Date();
+let selectedCalendarDay = todayIsoDate();
+let timerStartedAt = null;
+let timerElapsedMs = 0;
+let timerInterval = null;
+let timerRunning = false;
+let medStartedAt = null;
+let medElapsedMs = 0;
+let medInterval = null;
+let medRunning = false;
+
+document.addEventListener('DOMContentLoaded', init);
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  if (location.protocol === 'file:') return;
+  navigator.serviceWorker.register('./sw.js').catch(err => console.warn('Service worker registration failed', err));
+}
+
+function init() {
+  registerServiceWorker();
+  renderBodyParts();
+  renderAddExerciseBodyParts();
+  renderTodayEmpty();
+  renderBodyMindEmpty();
+  renderCalendarShell();
+  updateConnectionStatus();
+  if (activeGasUrl) {
+    loadExercises();
+    loadToday();
+    loadBodyMind();
+    loadCalendar();
+  } else {
+    renderExerciseList();
+  }
+}
+
+function switchTab(btn, name) {
+  document.querySelectorAll('.tab-page').forEach(page => page.classList.remove('active'));
+  document.querySelectorAll('.tab-bar button').forEach(tab => tab.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'workout' && activeGasUrl && !exercises.length) loadExercises();
+  if (name === 'today' && activeGasUrl) loadToday();
+  if (name === 'bodymind' && activeGasUrl) loadBodyMind();
+  if (name === 'calendar' && activeGasUrl) loadCalendar();
+}
+
+function renderTodayEmpty() {
+  document.getElementById('todaySummary').innerHTML = metricCards([
+    ['0', '総ボリューム kg'], ['0', '有酸素 分'], ['0', '歩数'], ['0', '瞑想 分']
+  ]);
+}
+
+async function loadToday() {
+  try {
+    const data = await gasGet('getToday');
+    if (!data.ok) throw new Error(data.error || 'getToday failed');
+    todayData = data;
+    renderToday(data.summary || {}, data.advice || '');
+    renderBodyMindMetrics(data.summary || {});
+  } catch (err) {
+    console.error(err);
+    showToast('Todayを読み込めませんでした');
+  }
+}
+
+function renderToday(summary, advice) {
+  document.getElementById('todaySummary').innerHTML = metricCards([
+    [formatNum(summary.total_volume), '総ボリューム kg'],
+    [formatNum(summary.cardio_min), '有酸素 分'],
+    [formatNum(summary.steps), '歩数'],
+    [formatNum(summary.meditation_min), '瞑想 分']
+  ]);
+  document.getElementById('todayAdvice').textContent = advice || '本日の提案はまだありません。';
+}
+
+function renderBodyMindEmpty() {
+  document.getElementById('bodyMindMetrics').innerHTML = metricCards([
+    ['-', '歩数'], ['-', '体重 kg'], ['-', '体脂肪率 %'], ['-', '瞑想 分']
+  ]);
+  document.getElementById('bodyTrendChart').innerHTML = '<div class="empty-state">データなし</div>';
+}
+
+async function loadBodyMind() {
+  try {
+    const [today, month] = await Promise.all([
+      gasGet('getToday'),
+      gasGet(`getCalendar&year=${calendarDate.getFullYear()}&month=${calendarDate.getMonth() + 1}`)
+    ]);
+    if (!today.ok) throw new Error(today.error || 'getToday failed');
+    if (!month.ok) throw new Error(month.error || 'getCalendar failed');
+    todayData = today;
+    monthSummary = month.days || [];
+    renderBodyMindMetrics(today.summary || {});
+    renderBodyTrend(monthSummary);
+  } catch (err) {
+    console.error(err);
+    showToast('Body/Mindを読み込めませんでした');
+  }
+}
+
+function renderBodyMindMetrics(summary) {
+  document.getElementById('bodyMindMetrics').innerHTML = metricCards([
+    [formatNum(summary.steps), '歩数'],
+    [formatNum(summary.weight_kg), '体重 kg'],
+    [formatNum(summary.body_fat_pct), '体脂肪率 %'],
+    [formatNum(summary.meditation_min), '瞑想 分']
+  ]);
+}
+
+function renderBodyTrend(days) {
+  document.getElementById('trendMonthLabel').textContent = `${calendarDate.getFullYear()}/${calendarDate.getMonth() + 1}`;
+  const points = (days || []).map(row => ({ day: Number(String(row.date).slice(8, 10)), weight: numOrNull(row.weight_kg), fat: numOrNull(row.body_fat_pct) })).filter(p => p.weight !== null || p.fat !== null);
+  if (!points.length) {
+    document.getElementById('bodyTrendChart').innerHTML = '<div class="empty-state">データなし</div>';
+    return;
+  }
+  const maxDay = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
+  const weightLine = buildSeries(points, 'weight', maxDay, 150, 18);
+  const fatLine = buildSeries(points, 'fat', maxDay, 150, 18);
+  const circles = [];
+  weightLine.points.forEach(p => circles.push(`<circle cx="${p.x}" cy="${p.y}" r="2.8" fill="var(--accent)"></circle>`));
+  fatLine.points.forEach(p => circles.push(`<circle cx="${p.x}" cy="${p.y}" r="2.8" fill="var(--accent-2)"></circle>`));
+  document.getElementById('bodyTrendChart').innerHTML = `<svg viewBox="0 0 320 160" preserveAspectRatio="none"><line x1="20" y1="142" x2="306" y2="142" stroke="rgba(255,255,255,.12)" stroke-width="1"></line><line x1="20" y1="18" x2="20" y2="142" stroke="rgba(255,255,255,.12)" stroke-width="1"></line>${weightLine.path ? `<polyline points="${weightLine.path}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>` : ''}${fatLine.path ? `<polyline points="${fatLine.path}" fill="none" stroke="var(--accent-2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>` : ''}${circles.join('')}</svg>`;
+}
+
+async function saveBodyLog() {
+  const weight = valueOrNull(document.getElementById('bodyWeight').value);
+  const fat = valueOrNull(document.getElementById('bodyFat').value);
+  if (weight === null && fat === null) { showToast('体重か体脂肪率を入力してください'); return; }
+  setSaving(true, '保存中');
+  try {
+    const result = await gasPost({ action: 'addBodyLog', date: todayIsoDate(), weight_kg: weight, body_fat_pct: fat, source: 'manual' });
+    if (!result.ok) throw new Error(result.error || 'addBodyLog failed');
+    document.getElementById('bodyWeight').value = '';
+    document.getElementById('bodyFat').value = '';
+    showToast('Body Logを保存しました');
+    void refreshSummaries();
+  } catch (err) { console.error(err); showToast('保存に失敗しました'); }
+  finally { setSaving(false); }
+}
+async function saveMeditation() {
+  const minutes = Number(document.getElementById('meditationMinutes').value || 0);
+  if (!minutes) { showToast('瞑想時間を入力してください'); return; }
+  setSaving(true, '保存中');
+  try {
+    const result = await gasPost({ action: 'addMeditation', date: todayIsoDate(), duration_min: minutes, memo: '' });
+    if (!result.ok) throw new Error(result.error || 'addMeditation failed');
+    document.getElementById('meditationMinutes').value = '';
+    resetMedTimer();
+    showToast('瞑想を保存しました');
+    void refreshSummaries();
+  } catch (err) { console.error(err); showToast('保存に失敗しました'); }
+  finally { setSaving(false); }
+}
+function renderCalendarShell() {
+  document.getElementById('calendarTitle').textContent = `${calendarDate.getFullYear()}/${calendarDate.getMonth() + 1}`;
+  document.getElementById('calendarGrid').innerHTML = WEEKDAYS.map(d => `<div class="weekday">${d}</div>`).join('');
+  document.getElementById('dayDetail').innerHTML = '<div class="empty-state">日付を選択</div>';
+}
+
+async function loadCalendar() {
+  try {
+    const y = calendarDate.getFullYear();
+    const m = calendarDate.getMonth() + 1;
+    const data = await gasGet(`getCalendar&year=${y}&month=${m}`);
+    if (!data.ok) throw new Error(data.error || 'getCalendar failed');
+    monthSummary = data.days || [];
+    renderCalendar();
+    renderBodyTrend(monthSummary);
+  } catch (err) { console.error(err); showToast('Calendarを読み込めませんでした'); }
+}
+
+function renderCalendar() {
+  const y = calendarDate.getFullYear();
+  const m = calendarDate.getMonth();
+  document.getElementById('calendarTitle').textContent = `${y}/${m + 1}`;
+  const first = new Date(y, m, 1);
+  const start = new Date(y, m, 1 - first.getDay());
+  const byDate = indexByDate(monthSummary);
+  const cells = WEEKDAYS.map(d => `<div class="weekday">${d}</div>`);
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const date = toIsoDate(d);
+    const summary = byDate[date];
+    cells.push(`<button class="day-cell ${d.getMonth() !== m ? 'out' : ''} ${date === todayIsoDate() ? 'today' : ''}" type="button" onclick="selectCalendarDay('${date}')"><span class="day-num">${d.getDate()}</span><span class="dots">${summary ? calendarDots(summary) : ''}</span></button>`);
+  }
+  document.getElementById('calendarGrid').innerHTML = cells.join('');
+  selectCalendarDay(selectedCalendarDay, true);
+}
+
+function calendarDots(summary) {
+  const parts = String(summary.body_parts || '');
+  const hasStrength = (Number(summary.total_volume) || 0) > 0 || (parts && !parts.split(',').every(p => p === '有酸素'));
+  const hasCardio = (Number(summary.cardio_min) || 0) > 0 || parts.includes('有酸素');
+  const hasMeditation = (Number(summary.meditation_min) || 0) > 0;
+  return [hasStrength ? '<i class="dot strength"></i>' : '', hasCardio ? '<i class="dot cardio"></i>' : '', hasMeditation ? '<i class="dot meditation"></i>' : ''].join('');
+}
+
+function selectCalendarDay(date, silent) {
+  selectedCalendarDay = date;
+  const summary = indexByDate(monthSummary)[date] || { date };
+  document.getElementById('dayDetailTitle').textContent = date;
+  document.getElementById('dayDetail').innerHTML = detailRows([
+    ['実施部位', summary.body_parts || '-'], ['総ボリューム', `${formatNum(summary.total_volume)} kg`], ['有酸素', `${formatNum(summary.cardio_min)} 分`], ['歩数', `${formatNum(summary.steps)} 歩`], ['体重', `${formatNum(summary.weight_kg)} kg`], ['体脂肪率', `${formatNum(summary.body_fat_pct)} %`], ['瞑想', `${formatNum(summary.meditation_min)} 分`]
+  ]);
+  if (!silent) document.getElementById('dayDetail').scrollIntoView({ block: 'nearest' });
+}
+
+function moveCalendarMonth(delta) {
+  calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + delta, 1);
+  selectedCalendarDay = toIsoDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1));
+  loadCalendar();
+}
+function renderBodyParts() {
+  const wrap = document.getElementById('bodyPartButtons');
+  wrap.innerHTML = BODY_PARTS.map(part => `<button type="button" class="${part === selectedBodyPart ? 'active' : ''}" onclick="selectBodyPart('${part}')">${part}</button>`).join('');
+}
+
+function renderAddExerciseBodyParts() {
+  const select = document.getElementById('newBodyPart');
+  select.innerHTML = BODY_PARTS.map(part => `<option value="${part}">${part}</option>`).join('');
+  select.value = selectedBodyPart;
+}
+
+function selectBodyPart(part) {
+  selectedBodyPart = part;
+  document.getElementById('newBodyPart').value = part;
+  renderBodyParts();
+  renderExerciseList();
+}
+
+function renderExerciseList() {
+  const list = document.getElementById('exerciseList');
+  if (!activeGasUrl) {
+    list.innerHTML = '<div class="empty-state">設定から GAS WebApp URL を入力してください。</div>';
+    return;
+  }
+  const filtered = exercises
+    .filter(ex => ex.body_part === selectedBodyPart)
+    .sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0));
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state">この部位の種目はまだありません。</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(ex => `
+    <button class="exercise-btn" type="button" onclick="openRecord('${escapeAttr(ex.id)}')">
+      <span class="exercise-name"><strong>${escapeHtml(ex.name)}</strong><span>${escapeHtml(ex.equipment || 'その他')}</span></span>
+      <span class="pill">${isCardio(ex) ? '有酸素' : '記録'}</span>
+    </button>
+  `).join('');
+}
+
+async function loadExercises() {
+  try {
+    setStatus('読み込み中...');
+    const data = await gasGet('getExercises');
+    if (!data.ok) throw new Error(data.error || 'getExercises failed');
+    exercises = data.exercises || [];
+    renderExerciseList();
+    setStatus('接続済み');
+  } catch (err) {
+    console.error(err);
+    showToast('種目を読み込めませんでした');
+    setStatus('接続エラー');
+    renderExerciseList();
+  }
+}
+
+async function openRecord(exerciseId) {
+  selectedExercise = exercises.find(ex => ex.id === exerciseId);
+  if (!selectedExercise) return;
+  document.getElementById('workoutPicker').style.display = 'none';
+  document.getElementById('recordPanel').style.display = 'block';
+  document.getElementById('recordTitle').textContent = selectedExercise.name;
+  document.getElementById('recordMeta').textContent = `${selectedExercise.body_part} / ${selectedExercise.equipment || 'その他'}`;
+  document.getElementById('strengthRecord').style.display = isCardio(selectedExercise) ? 'none' : 'block';
+  document.getElementById('cardioRecord').style.display = isCardio(selectedExercise) ? 'block' : 'none';
+  resetTimer();
+  lastWorkout = null;
+  document.getElementById('lastWorkout').textContent = '前回値を読み込み中...';
+  if (!isCardio(selectedExercise)) renderSets([{ weight_kg: '', reps: '' }, { weight_kg: '', reps: '' }, { weight_kg: '', reps: '' }]);
+
+  try {
+    const data = await gasGet(`getLastWorkout&exercise_id=${encodeURIComponent(exerciseId)}`);
+    if (!data.ok) throw new Error(data.error || 'getLastWorkout failed');
+    lastWorkout = data;
+    renderLastWorkout();
+    if (!isCardio(selectedExercise)) seedSetsFromLastWorkout();
+    else seedCardioFromLastWorkout();
+  } catch (err) {
+    console.error(err);
+    document.getElementById('lastWorkout').textContent = '前回値を読み込めませんでした。';
+    showToast('前回値の取得に失敗しました');
+  }
+}
+
+function backToPicker() {
+  stopTimerInterval();
+  document.getElementById('recordPanel').style.display = 'none';
+  document.getElementById('workoutPicker').style.display = 'block';
+}
+
+function renderLastWorkout() {
+  const box = document.getElementById('lastWorkout');
+  if (!lastWorkout || !lastWorkout.date) {
+    box.innerHTML = '<strong>前回</strong>記録なし。今日の値を入力してください。';
+    return;
+  }
+  if (isCardio(selectedExercise)) {
+    const set = (lastWorkout.sets || [])[0] || {};
+    box.innerHTML = `<strong>前回 ${escapeHtml(lastWorkout.date)}</strong>${formatNum(set.duration_min)}分 / ${formatNum(set.distance_km)}km`;
+    return;
+  }
+  const summary = (lastWorkout.sets || []).map(set => `${set.set_no}: ${formatNum(set.weight_kg)}kg x ${formatNum(set.reps)}`).join(' / ');
+  box.innerHTML = `<strong>前回 ${escapeHtml(lastWorkout.date)}</strong>${escapeHtml(summary || 'セット記録なし')}`;
+}
+
+function seedSetsFromLastWorkout() {
+  const sets = (lastWorkout && lastWorkout.sets && lastWorkout.sets.length) ? lastWorkout.sets : [{}, {}, {}];
+  renderSets(sets.map(set => ({ weight_kg: '', reps: '', lastWeight: set.weight_kg, lastReps: set.reps })));
+}
+
+function renderSets(seedSets) {
+  const list = document.getElementById('setList');
+  list.innerHTML = '';
+  seedSets.forEach(seed => addSetRow(seed));
+}
+
+function addSetRow(seed = {}) {
+  const list = document.getElementById('setList');
+  const index = list.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'set-row';
+  row.innerHTML = `
+    <div class="set-row-top"><strong>Set ${index}</strong><button class="btn-ghost" type="button" onclick="removeSetRow(this)">削除</button></div>
+    <div class="form-row">
+      <div><label>kg</label><input class="set-weight" type="number" min="0" step="0.5" placeholder="${safePlaceholder(seed.lastWeight, 'kg')}" value="${seed.weight_kg || ''}"></div>
+      <div><label>回数</label><input class="set-reps" type="number" min="0" step="1" placeholder="${safePlaceholder(seed.lastReps, '回')}" value="${seed.reps || ''}"></div>
+    </div>
+  `;
+  list.appendChild(row);
+  renumberSets();
+}
+
+function removeSetRow(button) {
+  const list = document.getElementById('setList');
+  if (list.children.length <= 1) {
+    showToast('最低1セットは必要です');
+    return;
+  }
+  button.closest('.set-row').remove();
+  renumberSets();
+}
+
+function renumberSets() {
+  [...document.querySelectorAll('.set-row')].forEach((row, i) => {
+    row.querySelector('strong').textContent = `Set ${i + 1}`;
+  });
+}
+
+function seedCardioFromLastWorkout() {
+  const set = (lastWorkout && lastWorkout.sets && lastWorkout.sets[0]) || {};
+  document.getElementById('cardioDuration').placeholder = set.duration_min ? `${set.duration_min}` : '自動入力';
+  document.getElementById('cardioDistance').placeholder = set.distance_km ? `${set.distance_km}` : '0.00';
+}
+
+async function saveWorkout() {
+  if (!selectedExercise) return;
+  const body = {
+    action: 'addWorkout',
+    date: todayIsoDate(),
+    exercise_id: selectedExercise.id,
+    sets: []
+  };
+
+  if (isCardio(selectedExercise)) {
+    const duration = Number(document.getElementById('cardioDuration').value || 0);
+    const distance = document.getElementById('cardioDistance').value;
+    if (!duration) { showToast('時間を入力してください'); return; }
+    body.sets.push({ set_no: 1, duration_min: duration, distance_km: distance === '' ? null : Number(distance) });
+  } else {
+    const rows = [...document.querySelectorAll('.set-row')];
+    body.sets = rows.map((row, i) => ({
+      set_no: i + 1,
+      weight_kg: valueOrNull(row.querySelector('.set-weight').value),
+      reps: valueOrNull(row.querySelector('.set-reps').value)
+    })).filter(set => set.weight_kg !== null || set.reps !== null);
+    if (!body.sets.length) { showToast('kgか回数を入力してください'); return; }
+  }
+
+  setSaving(true, '保存中');
+  try {
+    const result = await gasPost(body);
+    if (!result.ok) throw new Error(result.error || 'addWorkout failed');
+    showToast('Workoutを保存しました');
+    backToPicker();
+    void refreshSummaries();
+  } catch (err) {
+    console.error(err);
+    showToast('保存に失敗しました');
+  } finally {
+    setSaving(false);
+  }
+}
+
+function toggleAddExercise(show) {
+  document.getElementById('addExercisePanel').classList.toggle('active', show);
+}
+
+async function saveExercise() {
+  const name = document.getElementById('newExerciseName').value.trim();
+  if (!name) { showToast('種目名を入力してください'); return; }
+  const bodyPart = document.getElementById('newBodyPart').value;
+  const body = {
+    action: 'addExercise',
+    body_part: bodyPart,
+    name,
+    equipment: document.getElementById('newEquipment').value.trim() || 'その他',
+    is_cardio: document.getElementById('newIsCardio').value === 'true'
+  };
+  try {
+    const result = await gasPost(body);
+    if (!result.ok) throw new Error(result.error || 'addExercise failed');
+    document.getElementById('newExerciseName').value = '';
+    document.getElementById('newEquipment').value = '';
+    selectedBodyPart = bodyPart;
+    toggleAddExercise(false);
+    showToast('種目を追加しました');
+    await loadExercises();
+    renderBodyParts();
+  } catch (err) {
+    console.error(err);
+    showToast('種目追加に失敗しました');
+  }
+}
+
+function timerStart() {
+  if (timerRunning) return;
+  timerStartedAt = Date.now();
+  timerRunning = true;
+  timerInterval = setInterval(updateTimerDisplay, 250);
+  updateTimerDisplay();
+}
+
+function timerPause() {
+  if (!timerRunning) return;
+  timerElapsedMs += Date.now() - timerStartedAt;
+  stopTimerInterval();
+  updateTimerDisplay();
+}
+
+function timerStop() {
+  if (timerRunning) timerElapsedMs += Date.now() - timerStartedAt;
+  stopTimerInterval();
+  const minutes = Math.round((timerElapsedMs / 60000) * 10) / 10;
+  document.getElementById('cardioDuration').value = minutes || '';
+  updateTimerDisplay();
+}
+
+function resetTimer() {
+  stopTimerInterval();
+  timerStartedAt = null;
+  timerElapsedMs = 0;
+  document.getElementById('cardioDuration').value = '';
+  document.getElementById('cardioDistance').value = '';
+  updateTimerDisplay();
+}
+
+function stopTimerInterval() {
+  timerRunning = false;
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+function updateTimerDisplay() {
+  const elapsed = timerElapsedMs + (timerRunning ? Date.now() - timerStartedAt : 0);
+  const totalSeconds = Math.floor(elapsed / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  document.getElementById('timerDisplay').textContent = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+}
+
+function medTimerStart() {
+  if (medRunning) return;
+  medStartedAt = Date.now();
+  medRunning = true;
+  medInterval = setInterval(updateMedTimerDisplay, 250);
+  updateMedTimerDisplay();
+}
+function medTimerPause() {
+  if (!medRunning) return;
+  medElapsedMs += Date.now() - medStartedAt;
+  stopMedTimerInterval();
+  updateMedTimerDisplay();
+}
+function medTimerStop() {
+  if (medRunning) medElapsedMs += Date.now() - medStartedAt;
+  stopMedTimerInterval();
+  const minutes = Math.round((medElapsedMs / 60000) * 10) / 10;
+  document.getElementById('meditationMinutes').value = minutes || '';
+  updateMedTimerDisplay();
+}
+function resetMedTimer() {
+  stopMedTimerInterval();
+  medStartedAt = null;
+  medElapsedMs = 0;
+  updateMedTimerDisplay();
+}
+function stopMedTimerInterval() {
+  medRunning = false;
+  if (medInterval) clearInterval(medInterval);
+  medInterval = null;
+}
+function updateMedTimerDisplay() {
+  const elapsed = medElapsedMs + (medRunning ? Date.now() - medStartedAt : 0);
+  setTimeDisplay('medTimerDisplay', elapsed);
+}
+function setTimeDisplay(id, elapsedMs) {
+  const totalSeconds = Math.floor(elapsedMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  document.getElementById(id).textContent = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+}
+
+async function refreshSummaries() {
+  if (!activeGasUrl) return;
+  try {
+    showLoading('更新中');
+    const [today, month] = await Promise.all([
+      gasGet('getToday'),
+      gasGet(`getCalendar&year=${calendarDate.getFullYear()}&month=${calendarDate.getMonth() + 1}`)
+    ]);
+    if (!today.ok) throw new Error(today.error || 'getToday failed');
+    if (!month.ok) throw new Error(month.error || 'getCalendar failed');
+    todayData = today;
+    monthSummary = month.days || [];
+    renderToday(today.summary || {}, today.advice || '');
+    renderBodyMindMetrics(today.summary || {});
+    renderCalendar();
+    renderBodyTrend(monthSummary);
+  } catch (err) {
+    console.error(err);
+    showToast('表示更新に失敗しました');
+  } finally {
+    hideLoading();
+  }
+}
+async function gasGet(action) {
+  assertGasUrl();
+  const joiner = action.includes('?') ? '&' : '?';
+  const url = `${activeGasUrl}${joiner}action=${action}`;
+  const res = await fetch(url, { redirect: 'follow' });
+  return res.json();
+}
+
+async function gasPost(body) {
+  assertGasUrl();
+  const res = await fetch(activeGasUrl, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+function assertGasUrl() {
+  if (!activeGasUrl) {
+    openSettings();
+    throw new Error('GAS URL is not set');
+  }
+}
+
+function openSettings() {
+  document.getElementById('gasUrlInput').value = activeGasUrl;
+  document.getElementById('settingsModal').classList.add('active');
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('active');
+}
+
+function closeSettingsFromBackdrop(event) {
+  if (event.target.id === 'settingsModal') closeSettings();
+}
+
+function saveGasUrl() {
+  const value = document.getElementById('gasUrlInput').value.trim();
+  activeGasUrl = value;
+  if (value) localStorage.setItem(STORAGE_GAS_URL_KEY, value);
+  else localStorage.removeItem(STORAGE_GAS_URL_KEY);
+  closeSettings();
+  updateConnectionStatus();
+  if (value) {
+    loadExercises();
+    loadToday();
+    loadBodyMind();
+    loadCalendar();
+  } else renderExerciseList();
+}
+
+function updateConnectionStatus() {
+  setStatus(activeGasUrl ? '接続設定済み' : 'GAS未設定');
+}
+
+function setStatus(text) {
+  document.getElementById('statusLine').textContent = text;
+}
+
+function showLoading(message = '通信中') {
+  const banner = document.getElementById('loadingBanner');
+  document.getElementById('loadingText').textContent = message;
+  banner.classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loadingBanner').classList.remove('show');
+}
+function setSaving(isSaving, message = '保存中') {
+  document.querySelectorAll('button[onclick="saveWorkout()"],button[onclick="saveBodyLog()"],button[onclick="saveMeditation()"],button[onclick="saveExercise()"],button[onclick="saveGasUrl()"]')
+    .forEach(button => { button.disabled = isSaving; });
+  if (isSaving) showLoading(message);
+  else hideLoading();
+}
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+function metricCards(rows) {
+  return rows.map(([value, label]) => `<div class="metric"><div class="value">${escapeHtml(value)}</div><div class="label">${escapeHtml(label)}</div></div>`).join('');
+}
+function detailRows(rows) {
+  return rows.map(([label, value]) => `<div class="detail-row"><span>${escapeHtml(label)}</span><span>${escapeHtml(value)}</span></div>`).join('');
+}
+function buildSeries(points, key, maxDay, height, topPad) {
+  const values = points.filter(p => p[key] !== null);
+  if (!values.length) return { path: '', points: [] };
+  const nums = values.map(p => p[key]);
+  let min = Math.min(...nums);
+  let max = Math.max(...nums);
+  if (min === max) { min -= 1; max += 1; }
+  const coords = values.map(p => {
+    const x = 20 + ((p.day - 1) / Math.max(1, maxDay - 1)) * 286;
+    const y = topPad + (1 - ((p[key] - min) / (max - min))) * (height - topPad - 18);
+    return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+  });
+  return { path: coords.map(p => `${p.x},${p.y}`).join(' '), points: coords };
+}
+function indexByDate(rows) {
+  const result = {};
+  (rows || []).forEach(row => { result[String(row.date).slice(0, 10)] = row; });
+  return result;
+}
+function toIsoDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function numOrNull(value) { return valueOrNull(value); }
+function isCardio(exercise) {
+  return exercise && (exercise.is_cardio === true || exercise.is_cardio === 'TRUE' || exercise.is_cardio === 'true' || exercise.body_part === '有酸素');
+}
+
+function todayIsoDate() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function valueOrNull(value) {
+  if (value === '' || value === null || value === undefined) return null;
+  const n = Number(value);
+  return Number.isNaN(n) ? null : n;
+}
+
+function formatNum(value) {
+  return value === null || value === undefined || value === '' ? '-' : value;
+}
+
+function safePlaceholder(value, suffix) {
+  return value === null || value === undefined || value === '' ? '' : `${value}${suffix}`;
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replace(/'/g, '&#39;');
+}
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
